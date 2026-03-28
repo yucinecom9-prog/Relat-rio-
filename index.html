@@ -92,43 +92,32 @@
     </div>
 </div>
 
+<div id="resumoDia" class="card resumo-dia hidden">
+    <h2 style="color: #0369a1;">📅 RESUMO DO DIA</h2>
+    <span id="totalHorasDia" style="font-size: 28px; font-weight: 900; color: #1e3a8a;">0.00 Horas</span>
+    <p style="margin: 5px 0 0 0; font-size: 10px; font-weight: bold; color: #0369a1;">TOTAL DE HORAS TRABALHADAS</p>
+</div>
+
 <div class="card">
     <h2>🛠️ 3. OBSERVAÇÕES / JUSTIFICATIVA</h2>
     <div id="statusEmergencia" class="status-emergencia hidden">🚨 MÁQUINA EM PARADA DE EMERGÊNCIA</div>
     <textarea id="justManut" placeholder="DESCREVA O QUE FOI FEITO NA MANUTENÇÃO..." oninput="salvar(); calcular()" style="height:80px;"></textarea>
-    
-    <button id="btnParar" class="btn-emergencia-agro" onclick="acaoEmergencia('parar')">🚨 PARADA DE EMERGÊNCIA (MANUTENÇÃO NÃO PROGRAMADA)</button>
+    <button id="btnParar" class="btn-emergencia-agro" onclick="acaoEmergencia('parar')">🚨 PARADA DE EMERGÊNCIA (M.N.P)</button>
     <button id="btnRetomar" style="background:var(--success); display:none;" onclick="acaoEmergencia('retomar')">✅ RETOMAR TRABALHO</button>
-</div>
-
-<div class="card">
-    <h2>⏱️ 4. JORNADA (OPCIONAL)</h2>
-    <div class="row" style="text-align:center">
-        <div style="flex:1"><label style="font-size:9px;">INÍCIO</label><input id="sIni" readonly style="border:none; text-align:center; background:none;"></div>
-        <div style="flex:1"><label style="font-size:9px;">FIM</label><input id="sFim" readonly style="border:none; text-align:center; background:none;"></div>
-    </div>
-    <button id="btnIniciarGeral" style="background:var(--primary)" onclick="marcar('ini')">▶ Iniciar Trabalho</button>
-    <button id="btnFinalizarGeral" style="background:#475569" onclick="marcar('fim')">⏹️ Finalizar Trabalho</button>
 </div>
 
 <div id="avisoErro" class="alerta-trava hidden"></div>
 
-<div id="resumoDia" class="resumo-dia hidden">
-    <span style="font-size: 11px; color: #0369a1; font-weight: bold; text-transform: uppercase;">Resumo do Dia</span><br>
-    <span id="totalHorasDia" style="font-size: 24px; font-weight: 900; color: #1e3a8a;">0.00 Horas</span>
-</div>
-
 <div class="card" id="areaAcoes">
-    <button id="btnPDF" style="background:var(--danger)" onclick="gerarPDF()">📄 PDF PROFISSIONAL</button>
-    <button id="btnWA" style="background:var(--success)" onclick="enviarWA()">📱 WHATSAPP</button>
-    <button onclick="limparTudo()" style="background:#95a5a6; font-size:10px; padding:5px;">🔄 RESETAR</button>
+    <button id="btnPDF" style="background:var(--danger)" onclick="gerarPDF()">📄 GERAR RELATÓRIO PROFISSIONAL</button>
+    <button id="btnWA" style="background:var(--success)" onclick="enviarWA()">📱 ENVIAR PELO WHATSAPP</button>
+    <button onclick="limparTudo()" style="background:#95a5a6; font-size:10px; padding:5px;">🔄 RESETAR DADOS</button>
 </div>
 
 <footer>Desenvolvido por João Divino Barbosa ®</footer>
 
 <script>
-// Objeto central de dados para evitar erros de referência
-let appState = { ini: null, fim: null, emEmergencia: false };
+let appState = { emEmergencia: false };
 
 function salvar() {
     let obj = {
@@ -139,16 +128,14 @@ function salvar() {
         tipoManut: document.getElementById('tipoManut').value,
         vI: document.getElementById('vI').value,
         vF: document.getElementById('vF').value,
-        sIni: document.getElementById('sIni').value,
-        sFim: document.getElementById('sFim').value,
         logica: appState,
         justManut: document.getElementById('justManut').value
     };
-    localStorage.setItem('agro_v16_emergencia', JSON.stringify(obj));
+    localStorage.setItem('agro_v17_pro', JSON.stringify(obj));
 }
 
 function carregarDados() {
-    let s = JSON.parse(localStorage.getItem('agro_v16_emergencia') || '{}');
+    let s = JSON.parse(localStorage.getItem('agro_v17_pro') || '{}');
     document.getElementById('fazenda').value = s.fazenda || '';
     document.getElementById('op').value = s.op || '';
     document.getElementById('tipoMaq').value = s.tipoMaq || '';
@@ -156,11 +143,8 @@ function carregarDados() {
     document.getElementById('tipoManut').value = s.tipoManut || '0';
     document.getElementById('vI').value = s.vI || '';
     document.getElementById('vF').value = s.vF || '';
-    document.getElementById('sIni').value = s.sIni || '';
-    document.getElementById('sFim').value = s.sFim || '';
     document.getElementById('justManut').value = s.justManut || '';
-    
-    appState = s.logica || { ini: null, fim: null, emEmergencia: false };
+    appState = s.logica || { emEmergencia: false };
     
     if(appState.emEmergencia) {
         document.getElementById('btnParar').style.display = 'none';
@@ -174,40 +158,17 @@ function acaoEmergencia(tipo) {
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     let campoObs = document.getElementById('justManut');
     if(tipo === 'parar') {
-        campoObs.value += `\n[PARADA DE EMERGÊNCIA - MANUTENÇÃO NÃO PROGRAMADA ÀS ${agora}] `;
+        campoObs.value += `\n[PARADA DE EMERGÊNCIA ÀS ${agora}] `;
         appState.emEmergencia = true;
         document.getElementById('btnParar').style.display = 'none';
         document.getElementById('btnRetomar').style.display = 'block';
         document.getElementById('statusEmergencia').classList.remove('hidden');
     } else {
-        campoObs.value += `-> RETORNO AO TRABALHO ÀS ${agora}. `;
+        campoObs.value += `-> RETORNO ÀS ${agora}. `;
         appState.emEmergencia = false;
         document.getElementById('btnRetomar').style.display = 'none';
         document.getElementById('btnParar').style.display = 'block';
         document.getElementById('statusEmergencia').classList.add('hidden');
-    }
-    salvar();
-}
-
-function marcar(t) {
-    let faz = document.getElementById('fazenda').value;
-    let maq = document.getElementById('tipoMaq').value;
-    let manut = document.getElementById('tipoManut').value;
-
-    if(t === 'ini') {
-        if(!faz || !maq || manut == "0") {
-            alert("Preencha Fazenda, Máquina e a Manutenção antes de iniciar!");
-            return;
-        }
-        appState.ini = new Date().getTime();
-        document.getElementById('sIni').value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    } else {
-        if (!appState.ini) {
-            alert("Inicie o trabalho primeiro!");
-            return;
-        }
-        appState.fim = new Date().getTime();
-        document.getElementById('sFim').value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     }
     salvar();
 }
@@ -252,48 +213,86 @@ function calcular() {
 function gerarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    const faz = document.getElementById('fazenda').value;
-    const maq = document.getElementById('tipoMaq').value;
-    const num = document.getElementById('numMaq').value;
-    const opNome = document.getElementById('op').value;
-    const vIVal = document.getElementById('vI').value;
-    const vFVal = document.getElementById('vF').value;
-    const obs = document.getElementById('justManut').value;
     const isVencido = document.getElementById('painelHorimetro').classList.contains('vencido');
-
+    
+    // CABEÇALHO PROFISSIONAL
     doc.setFillColor(26, 67, 115);
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.rect(0, 0, 210, 45, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.text("AGRO NA PALMA DA MÃO", 105, 18, {align:"center"});
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(24);
+    doc.text("AGRO NA PALMA DA MÃO", 105, 22, {align:"center"});
     doc.setFontSize(10);
-    doc.text("Desenvolvido por João Divino Barbosa ®", 105, 28, {align:"center"});
+    doc.setFont("helvetica", "normal");
+    doc.text("SISTEMA DE GESTÃO E MANUTENÇÃO AGRÍCOLA", 105, 30, {align:"center"});
+    doc.text("Desenvolvido por João Divino Barbosa ®", 105, 38, {align:"center"});
 
+    // CORPO DO RELATÓRIO
+    doc.setTextColor(44, 62, 80);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("INFORMAÇÕES DA OPERAÇÃO", 20, 60);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 62, 190, 62);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`FAZENDA:`, 20, 72); doc.setFont("helvetica", "bold"); doc.text(document.getElementById('fazenda').value.toUpperCase(), 60, 72);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`MÁQUINA:`, 20, 80); doc.setFont("helvetica", "bold"); doc.text(`${document.getElementById('tipoMaq').value.toUpperCase()} (${document.getElementById('numMaq').value})`, 60, 80);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`OPERADOR:`, 20, 88); doc.setFont("helvetica", "bold"); doc.text(document.getElementById('op').value.toUpperCase(), 60, 88);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`SERVIÇO:`, 20, 96); doc.setFont("helvetica", "bold"); doc.text(document.getElementById('tipoManut').options[document.getElementById('tipoManut').selectedIndex].text.toUpperCase(), 60, 96);
+
+    // TOTAL DE HORAS EM DESTAQUE
+    doc.setFillColor(240, 242, 245);
+    doc.rect(20, 105, 170, 20, 'F');
+    doc.setTextColor(26, 67, 115);
+    doc.setFontSize(12);
+    doc.text("TOTAL DE HORAS TRABALHADAS NO DIA:", 30, 117);
+    doc.setFontSize(16);
+    doc.text(document.getElementById('totalHorasDia').innerText, 130, 117);
+
+    // HORÍMETROS
+    doc.setTextColor(44, 62, 80);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`HORÍMETRO INICIAL: ${document.getElementById('vI').value}`, 20, 140);
+    doc.text(`HORÍMETRO FINAL: ${document.getElementById('vF').value}`, 20, 148);
+
+    // OBSERVAÇÕES
+    doc.setFont("helvetica", "bold");
+    doc.text("OBSERVAÇÕES TÉCNICAS:", 20, 165);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    let obs = document.getElementById('justManut').value || "Nenhuma observação registrada.";
+    doc.text(doc.splitTextToSize(obs, 170), 20, 172);
+
+    // ALERTA VENCIDO NO FINAL DA PÁGINA (PROFISSIONAL)
     if(isVencido) {
         doc.setFillColor(231, 76, 60);
-        doc.rect(0, 40, 210, 15, 'F');
-        doc.text("ALERTA: MANUTENÇÃO VENCIDA", 105, 50, {align:"center"});
+        doc.rect(0, 275, 210, 22, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("ALERTA DE SEGURANÇA: MANUTENÇÃO VENCIDA", 105, 285, {align:"center"});
+        doc.setFontSize(8);
+        doc.text("ESTE EQUIPAMENTO REQUER REVISÃO IMEDIATA PARA EVITAR DANOS MECÂNICOS.", 105, 290, {align:"center"});
     }
 
-    doc.setTextColor(0,0,0);
-    doc.setFontSize(12);
-    doc.text(`FAZENDA: ${faz.toUpperCase()}`, 20, 70);
-    doc.text(`MÁQUINA: ${maq.toUpperCase()} (${num})`, 20, 80);
-    doc.text(`HORÍMETRO: ${vIVal} -> ${vFVal}`, 20, 90);
-    doc.text(`OPERADOR: ${opNome.toUpperCase()}`, 20, 100);
-    doc.text("OBSERVAÇÕES:", 20, 120);
-    doc.setFontSize(10);
-    doc.text(doc.splitTextToSize(obs || "Sem observações.", 170), 20, 130);
-    
-    doc.save(`Relatorio_Agro_${faz}.pdf`);
+    doc.save(`Relatorio_Agro_${document.getElementById('fazenda').value}.pdf`);
 }
 
 function enviarWA() {
-    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${document.getElementById('tipoMaq').value}\n📍 *FAZENDA:* ${document.getElementById('fazenda').value}\n📝 *OBS:* ${document.getElementById('justManut').value}`;
+    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${document.getElementById('tipoMaq').value}\n📍 *FAZENDA:* ${document.getElementById('fazenda').value}\n⚙️ *TOTAL DO DIA:* ${document.getElementById('totalHorasDia').innerText}\n📝 *OBS:* ${document.getElementById('justManut').value}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
 }
 
-function limparTudo() { if(confirm("Deseja resetar todos os dados?")) { localStorage.clear(); location.reload(); } }
+function limparTudo() { if(confirm("Deseja resetar?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>

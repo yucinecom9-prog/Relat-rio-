@@ -27,6 +27,7 @@
         .hidden { display: none !important; }
         footer { text-align:center; font-size:10px; margin:20px; color:#94a3b8; font-weight: bold; }
         .alerta-trava { background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 12px; font-size: 12px; margin-bottom: 10px; border: 2px solid #f87171; text-align: center; font-weight: bold; }
+        .btn-emergencia { background: #e67e22 !important; border: 2px solid #d35400 !important; }
     </style>
 </head>
 <body onload="carregarDados()">
@@ -55,8 +56,9 @@
         <input id="numMaq" placeholder="Nº/Pref*" oninput="salvar()" style="flex:1">
     </div>
 
-    <select id="tipoManut" onchange="salvar(); calcular()">
+    <select id="tipoManut" onchange="salvar(); calcular(); checarNaoProgramada()">
         <option value="0">Selecione a Manutenção/Revisão *</option>
+        <option value="NP">⚠️ MANUTENÇÃO NÃO PROGRAMADA</option>
         <option value="100">Revisão 100 Horas</option>
         <option value="150">Revisão 150 Horas</option>
         <option value="200">Revisão 200 Horas</option>
@@ -68,6 +70,15 @@
         <option value="2000">Revisão 2.000 Horas</option>
         <option value="Corretiva">Manutenção Corretiva (Quebra)</option>
     </select>
+</div>
+
+<div id="cardEmergencia" class="card hidden" style="border-left-color: #e67e22; background: #fffaf0;">
+    <h2>🚨 CONTROLE DE PARADA (NÃO PROGRAMADA)</h2>
+    <div id="areaBotoesNP">
+        <button id="btnPararNP" class="btn-emergencia" onclick="registrarParadaNP()">🛑 REGISTRAR HORA DA PARADA</button>
+        <button id="btnVoltarNP" style="background:var(--success); display:none;" onclick="registrarVoltaNP()">⚙️ REGISTRAR VOLTA AO TRABALHO</button>
+    </div>
+    <p id="msgStatusNP" style="font-size: 11px; font-weight: bold; color: #d35400; text-align: center; margin-top: 5px;"></p>
 </div>
 
 <div id="painelHorimetro" class="card card-medicao">
@@ -94,19 +105,13 @@
 </div>
 
 <div class="card">
-    <h2>⏱️ 4. JORNADA E PARADAS</h2>
+    <h2>⏱️ 4. JORNADA (OPCIONAL)</h2>
     <div class="row" style="text-align:center">
         <div style="flex:1"><label style="font-size:9px;">INÍCIO</label><input id="sIni" readonly style="border:none; text-align:center; background:none;"></div>
         <div style="flex:1"><label style="font-size:9px;">FIM</label><input id="sFim" readonly style="border:none; text-align:center; background:none;"></div>
     </div>
-    <button id="btnIniciar" style="background:var(--primary)" onclick="marcar('ini')">▶ Iniciar Trabalho</button>
-    
-    <div id="controlesEmergencia" class="hidden">
-        <button id="btnParada" style="background:var(--warning)" onclick="registrarParada()">🚨 PARADA DE EMERGÊNCIA</button>
-        <button id="btnRetomar" style="background:var(--success)" onclick="registrarRetorno()" class="hidden">✅ RETOMAR TRABALHO</button>
-    </div>
-
-    <button id="btnFinalizar" style="background:#475569" onclick="marcar('fim')">⏹️ Finalizar Trabalho</button>
+    <button style="background:var(--primary)" onclick="marcar('ini')">▶ Iniciar Trabalho</button>
+    <button style="background:#475569" onclick="marcar('fim')">⏹️ Finalizar Trabalho</button>
 </div>
 
 <div id="avisoErro" class="alerta-trava hidden"></div>
@@ -125,7 +130,7 @@
 <footer>Desenvolvido por João Divino Barbosa ®</footer>
 
 <script>
-let dados = { ini: null, fim: null, emPausa: false };
+let dados = { ini: null, fim: null };
 
 function salvar() {
     let obj = {
@@ -142,19 +147,40 @@ function carregarDados() {
     tipoMaq.value = s.tipoMaq || ''; numMaq.value = s.numMaq || '';
     tipoManut.value = s.tipoManut || '0';
     vI.value = s.vI || ''; vF.value = s.vF || ''; sIni.value = s.sIni || ''; sFim.value = s.sFim || '';
-    dados = s.logica || { ini: null, fim: null, emPausa: false };
+    dados = s.logica || { ini: null, fim: null };
     justManut.value = s.justManut || '';
-    
-    // Restaurar estado dos botões de parada
-    if(dados.ini && !dados.fim) {
-        document.getElementById('controlesEmergencia').classList.remove('hidden');
-        document.getElementById('btnIniciar').classList.add('hidden');
-        if(dados.emPausa) {
-            document.getElementById('btnParada').classList.add('hidden');
-            document.getElementById('btnRetomar').classList.remove('hidden');
-        }
-    }
+    checarNaoProgramada();
     calcular();
+}
+
+// NOVA FUNÇÃO: Checa se é Manutenção Não Programada e mostra o card
+function checarNaoProgramada() {
+    let card = document.getElementById('cardEmergencia');
+    if (tipoManut.value === "NP") {
+        card.classList.remove('hidden');
+    } else {
+        card.classList.add('hidden');
+    }
+}
+
+// NOVA FUNÇÃO: Registra a hora que a máquina parou
+function registrarParadaNP() {
+    let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    justManut.value += `\n[PARADA NÃO PROGRAMADA ÀS ${agora}] `;
+    document.getElementById('btnPararNP').style.display = 'none';
+    document.getElementById('btnVoltarNP').style.display = 'block';
+    document.getElementById('msgStatusNP').innerText = "MÁQUINA PARADA DESDE " + agora;
+    salvar();
+}
+
+// NOVA FUNÇÃO: Registra a hora que voltou
+function registrarVoltaNP() {
+    let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    justManut.value += `-> RETORNO AO TRABALHO ÀS ${agora}. `;
+    document.getElementById('btnVoltarNP').style.display = 'none';
+    document.getElementById('btnPararNP').style.display = 'block';
+    document.getElementById('msgStatusNP').innerText = "VOLTOU A TRABALHAR ÀS " + agora;
+    salvar();
 }
 
 function marcar(t) {
@@ -162,33 +188,12 @@ function marcar(t) {
         if(!fazenda.value || !tipoMaq.value || tipoManut.value == "0") return alert("Preencha Fazenda, Máquina e a Manutenção!");
         dados.ini = new Date().getTime();
         sIni.value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        document.getElementById('controlesEmergencia').classList.remove('hidden');
-        document.getElementById('btnIniciar').classList.add('hidden');
     } else {
         if (!dados.ini) return alert("Inicie o trabalho!");
         dados.fim = new Date().getTime();
         sFim.value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        document.getElementById('controlesEmergencia').classList.add('hidden');
     }
     salvar(); calcular();
-}
-
-function registrarParada() {
-    const hora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    justManut.value += `\n[PARADA NÃO PROGRAMADA ÀS ${hora}] `;
-    dados.emPausa = true;
-    document.getElementById('btnParada').classList.add('hidden');
-    document.getElementById('btnRetomar').classList.remove('hidden');
-    salvar();
-}
-
-function registrarRetorno() {
-    const hora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    justManut.value += `-> RETORNO ÀS ${hora}.`;
-    dados.emPausa = false;
-    document.getElementById('btnRetomar').classList.add('hidden');
-    document.getElementById('btnParada').classList.remove('hidden');
-    salvar();
 }
 
 function calcular() {
@@ -283,7 +288,7 @@ function gerarPDF() {
 }
 
 function enviarWA() {
-    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value} (${numMaq.value})\n⚙️ *HORAS TRABALHADAS:* ${totalHorasDia.innerText}\n🛠️ *STATUS:* ${statusManut.innerText}\n📍 *FAZENDA:* ${fazenda.value}\n📋 *OPERAÇÃO:* ${tipoManut.options[tipoManut.selectedIndex].text}\n📝 *OBS:* ${justManut.value}`;
+    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value} (${numMaq.value})\n⚙️ *HORAS TRABALHADAS:* ${totalHorasDia.innerText}\n🛠️ *STATUS:* ${statusManut.innerText}\n📍 *FAZENDA:* ${fazenda.value}\n📋 *OPERAÇÃO:* ${tipoManut.options[tipoManut.selectedIndex].text}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
 }
 

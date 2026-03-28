@@ -1,10 +1,7 @@
-const cacheName = 'agropro-v1';
-const assets = ['./', './index.html'];
-
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(cacheName).then(cache => cache.addAll(assets)));
-});
-
-self.addEventListener('fetch', e => {
-  e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
-});
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("Agro Pro: Pronto para uso Offline!"))
+      .catch((err) => console.log("Erro no SW:", err));
+  }
+</script>

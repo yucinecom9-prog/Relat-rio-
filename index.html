@@ -94,13 +94,19 @@
 </div>
 
 <div class="card">
-    <h2>⏱️ 4. JORNADA (OPCIONAL)</h2>
+    <h2>⏱️ 4. JORNADA E PARADAS</h2>
     <div class="row" style="text-align:center">
         <div style="flex:1"><label style="font-size:9px;">INÍCIO</label><input id="sIni" readonly style="border:none; text-align:center; background:none;"></div>
         <div style="flex:1"><label style="font-size:9px;">FIM</label><input id="sFim" readonly style="border:none; text-align:center; background:none;"></div>
     </div>
-    <button style="background:var(--primary)" onclick="marcar('ini')">▶ Iniciar Trabalho</button>
-    <button style="background:#475569" onclick="marcar('fim')">⏹️ Finalizar Trabalho</button>
+    <button id="btnIniciar" style="background:var(--primary)" onclick="marcar('ini')">▶ Iniciar Trabalho</button>
+    
+    <div id="controlesEmergencia" class="hidden">
+        <button id="btnParada" style="background:var(--warning)" onclick="registrarParada()">🚨 PARADA DE EMERGÊNCIA</button>
+        <button id="btnRetomar" style="background:var(--success)" onclick="registrarRetorno()" class="hidden">✅ RETOMAR TRABALHO</button>
+    </div>
+
+    <button id="btnFinalizar" style="background:#475569" onclick="marcar('fim')">⏹️ Finalizar Trabalho</button>
 </div>
 
 <div id="avisoErro" class="alerta-trava hidden"></div>
@@ -119,7 +125,7 @@
 <footer>Desenvolvido por João Divino Barbosa ®</footer>
 
 <script>
-let dados = { ini: null, fim: null };
+let dados = { ini: null, fim: null, emPausa: false };
 
 function salvar() {
     let obj = {
@@ -136,8 +142,18 @@ function carregarDados() {
     tipoMaq.value = s.tipoMaq || ''; numMaq.value = s.numMaq || '';
     tipoManut.value = s.tipoManut || '0';
     vI.value = s.vI || ''; vF.value = s.vF || ''; sIni.value = s.sIni || ''; sFim.value = s.sFim || '';
-    dados = s.logica || { ini: null, fim: null };
+    dados = s.logica || { ini: null, fim: null, emPausa: false };
     justManut.value = s.justManut || '';
+    
+    // Restaurar estado dos botões de parada
+    if(dados.ini && !dados.fim) {
+        document.getElementById('controlesEmergencia').classList.remove('hidden');
+        document.getElementById('btnIniciar').classList.add('hidden');
+        if(dados.emPausa) {
+            document.getElementById('btnParada').classList.add('hidden');
+            document.getElementById('btnRetomar').classList.remove('hidden');
+        }
+    }
     calcular();
 }
 
@@ -146,12 +162,33 @@ function marcar(t) {
         if(!fazenda.value || !tipoMaq.value || tipoManut.value == "0") return alert("Preencha Fazenda, Máquina e a Manutenção!");
         dados.ini = new Date().getTime();
         sIni.value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('controlesEmergencia').classList.remove('hidden');
+        document.getElementById('btnIniciar').classList.add('hidden');
     } else {
         if (!dados.ini) return alert("Inicie o trabalho!");
         dados.fim = new Date().getTime();
         sFim.value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('controlesEmergencia').classList.add('hidden');
     }
     salvar(); calcular();
+}
+
+function registrarParada() {
+    const hora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    justManut.value += `\n[PARADA NÃO PROGRAMADA ÀS ${hora}] `;
+    dados.emPausa = true;
+    document.getElementById('btnParada').classList.add('hidden');
+    document.getElementById('btnRetomar').classList.remove('hidden');
+    salvar();
+}
+
+function registrarRetorno() {
+    const hora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    justManut.value += `-> RETORNO ÀS ${hora}.`;
+    dados.emPausa = false;
+    document.getElementById('btnRetomar').classList.add('hidden');
+    document.getElementById('btnParada').classList.remove('hidden');
+    salvar();
 }
 
 function calcular() {
@@ -179,7 +216,6 @@ function calcular() {
         }
     }
     
-    // Liberação pelos botões por horímetro final preenchido
     if(vF.value && vF.value > 0) {
         document.getElementById('resumoDia').classList.remove('hidden');
         document.getElementById('avisoErro').classList.add('hidden');
@@ -247,8 +283,7 @@ function gerarPDF() {
 }
 
 function enviarWA() {
-    // Remoção do nome do operador conforme solicitado
-    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value} (${numMaq.value})\n⚙️ *HORAS TRABALHADAS:* ${totalHorasDia.innerText}\n🛠️ *STATUS:* ${statusManut.innerText}\n📍 *FAZENDA:* ${fazenda.value}\n📋 *OPERAÇÃO:* ${tipoManut.options[tipoManut.selectedIndex].text}`;
+    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value} (${numMaq.value})\n⚙️ *HORAS TRABALHADAS:* ${totalHorasDia.innerText}\n🛠️ *STATUS:* ${statusManut.innerText}\n📍 *FAZENDA:* ${fazenda.value}\n📋 *OPERAÇÃO:* ${tipoManut.options[tipoManut.selectedIndex].text}\n📝 *OBS:* ${justManut.value}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
 }
 

@@ -28,10 +28,10 @@
         footer { text-align:center; font-size:10px; margin:20px; color:#94a3b8; font-weight: bold; }
         .alerta-trava { background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 12px; font-size: 12px; margin-bottom: 10px; border: 2px solid #f87171; text-align: center; font-weight: bold; }
         
-        /* Estilo do novo botão de parada */
-        .btn-parada-emergencia { background: #e67e22; border: 2px solid #d35400; box-shadow: 0 4px #a04000; }
-        .btn-parada-emergencia:active { box-shadow: 0 0; transform: translateY(4px); }
-        .status-parada { background: #fff1f1; border: 1px dashed #e74c3c; padding: 8px; border-radius: 8px; font-size: 11px; color: #c0392b; text-align: center; margin-bottom: 10px; font-weight: bold; }
+        /* Estilo corrigido do botão de emergência */
+        .btn-emergencia-agro { background: #d35400 !important; border: 2px solid #a04000 !important; box-shadow: 0 4px #782e00; }
+        .btn-emergencia-agro:active { box-shadow: 0 0; transform: translateY(4px); }
+        .status-emergencia { background: #fff5f5; border: 1px solid #ff0000; padding: 10px; border-radius: 8px; font-size: 12px; color: #b91c1c; text-align: center; margin-bottom: 10px; font-weight: 800; }
     </style>
 </head>
 <body onload="carregarDados()">
@@ -95,11 +95,11 @@
 
 <div class="card">
     <h2>🛠️ 3. OBSERVAÇÕES / JUSTIFICATIVA</h2>
-    <div id="infoParada" class="status-parada hidden">MÁQUINA EM PARADA NÃO PROGRAMADA</div>
-    <textarea id="justManut" placeholder="DESCREVA O QUE FOI FEITO NA MANUTENÇÃO OU O MOTIVO DA PARADA..." oninput="salvar(); calcular()" style="height:80px;"></textarea>
+    <div id="statusEmergencia" class="status-emergencia hidden">🚨 MÁQUINA EM PARADA DE EMERGÊNCIA</div>
+    <textarea id="justManut" placeholder="DESCREVA O QUE FOI FEITO NA MANUTENÇÃO..." oninput="salvar(); calcular()" style="height:80px;"></textarea>
     
-    <button id="btnParar" class="btn-parada-emergencia" onclick="registrarAcaoNP('parar')">🚨 REGISTRAR HORA DA PARADA</button>
-    <button id="btnRetomar" style="background:var(--success); display:none;" onclick="registrarAcaoNP('retomar')">⚙️ REGISTRAR RETORNO</button>
+    <button id="btnParar" class="btn-emergencia-agro" onclick="acaoEmergencia('parar')">🚨 PARADA DE EMERGÊNCIA (MANUTENÇÃO NÃO PROGRAMADA)</button>
+    <button id="btnRetomar" style="background:var(--success); display:none;" onclick="acaoEmergencia('retomar')">✅ RETOMAR TRABALHO</button>
 </div>
 
 <div class="card">
@@ -128,7 +128,7 @@
 <footer>Desenvolvido por João Divino Barbosa ®</footer>
 
 <script>
-let dados = { ini: null, fim: null, emPausa: false };
+let dados = { ini: null, fim: null, emEmergencia: false };
 
 function salvar() {
     let obj = {
@@ -145,33 +145,31 @@ function carregarDados() {
     tipoMaq.value = s.tipoMaq || ''; numMaq.value = s.numMaq || '';
     tipoManut.value = s.tipoManut || '0';
     vI.value = s.vI || ''; vF.value = s.vF || ''; sIni.value = s.sIni || ''; sFim.value = s.sFim || '';
-    dados = s.logica || { ini: null, fim: null, emPausa: false };
+    dados = s.logica || { ini: null, fim: null, emEmergencia: false };
     justManut.value = s.justManut || '';
     
-    // Restaurar estado dos botões de parada
-    if(dados.emPausa) {
+    if(dados.emEmergencia) {
         document.getElementById('btnParar').style.display = 'none';
         document.getElementById('btnRetomar').style.display = 'block';
-        document.getElementById('infoParada').classList.remove('hidden');
+        document.getElementById('statusEmergencia').classList.remove('hidden');
     }
     calcular();
 }
 
-function registrarAcaoNP(tipo) {
+function acaoEmergencia(tipo) {
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     if(tipo === 'parar') {
-        justManut.value += `\n[PARADA NÃO PROGRAMADA ÀS ${agora}] `;
-        dados.emPausa = true;
+        justManut.value += `\n[PARADA DE EMERGÊNCIA - MANUTENÇÃO NÃO PROGRAMADA ÀS ${agora}] `;
+        dados.emEmergencia = true;
         document.getElementById('btnParar').style.display = 'none';
         document.getElementById('btnRetomar').style.display = 'block';
-        document.getElementById('infoParada').classList.remove('hidden');
-        document.getElementById('infoParada').innerText = `MÁQUINA PARADA DESDE AS ${agora}`;
+        document.getElementById('statusEmergencia').classList.remove('hidden');
     } else {
-        justManut.value += `-> RETORNO ÀS ${agora}. `;
-        dados.emPausa = false;
+        justManut.value += `-> RETORNO AO TRABALHO ÀS ${agora}. `;
+        dados.emEmergencia = false;
         document.getElementById('btnRetomar').style.display = 'none';
         document.getElementById('btnParar').style.display = 'block';
-        document.getElementById('infoParada').classList.add('hidden');
+        document.getElementById('statusEmergencia').classList.add('hidden');
     }
     salvar();
 }
@@ -217,4 +215,33 @@ function calcular() {
     if(vF.value && vF.value > 0) {
         document.getElementById('resumoDia').classList.remove('hidden');
         document.getElementById('avisoErro').classList.add('hidden');
-        document.getElementById('btnPDF').classList.remove('hidden
+    } else {
+        document.getElementById('resumoDia').classList.add('hidden');
+        document.getElementById('avisoErro').classList.remove('hidden');
+        document.getElementById('avisoErro').innerText = "⚠️ INSIRA O HORÍMETRO FINAL PARA LIBERAR.";
+    }
+}
+
+function gerarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const isVencido = document.getElementById('painelHorimetro').classList.contains('vencido');
+    doc.setFillColor(26, 67, 115);
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text("AGRO NA PALMA DA MÃO", 105, 18, {align:"center"});
+    doc.setFontSize(10);
+    doc.text("Desenvolvido por João Divino Barbosa ®", 105, 28, {align:"center"});
+    if(isVencido) {
+        doc.setFillColor(231, 76, 60);
+        doc.rect(0, 40, 210, 15, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text("ALERTA: MANUTENÇÃO VENCIDA", 105, 50, {align:"center"});
+    }
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(`RESUMO: ${totalHorasDia.innerText} TRABALHADAS`, 20,

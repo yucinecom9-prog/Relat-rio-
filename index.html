@@ -74,10 +74,8 @@
 
 <div id="cardEmergencia" class="card hidden" style="border-left-color: #e67e22; background: #fffaf0;">
     <h2>🚨 CONTROLE DE PARADA (NÃO PROGRAMADA)</h2>
-    <div id="areaBotoesNP">
-        <button id="btnPararNP" class="btn-emergencia" onclick="registrarParadaNP()">🛑 REGISTRAR HORA DA PARADA</button>
-        <button id="btnVoltarNP" style="background:var(--success); display:none;" onclick="registrarVoltaNP()">⚙️ REGISTRAR VOLTA AO TRABALHO</button>
-    </div>
+    <button id="btnPararNP" class="btn-emergencia" onclick="registrarParadaNP()">🛑 REGISTRAR HORA DA PARADA</button>
+    <button id="btnVoltarNP" style="background:var(--success); display:none;" onclick="registrarVoltaNP()">⚙️ REGISTRAR VOLTA AO TRABALHO</button>
     <p id="msgStatusNP" style="font-size: 11px; font-weight: bold; color: #d35400; text-align: center; margin-top: 5px;"></p>
 </div>
 
@@ -153,17 +151,12 @@ function carregarDados() {
     calcular();
 }
 
-// NOVA FUNÇÃO: Checa se é Manutenção Não Programada e mostra o card
 function checarNaoProgramada() {
     let card = document.getElementById('cardEmergencia');
-    if (tipoManut.value === "NP") {
-        card.classList.remove('hidden');
-    } else {
-        card.classList.add('hidden');
-    }
+    if (tipoManut.value === "NP") { card.classList.remove('hidden'); } 
+    else { card.classList.add('hidden'); }
 }
 
-// NOVA FUNÇÃO: Registra a hora que a máquina parou
 function registrarParadaNP() {
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     justManut.value += `\n[PARADA NÃO PROGRAMADA ÀS ${agora}] `;
@@ -173,7 +166,6 @@ function registrarParadaNP() {
     salvar();
 }
 
-// NOVA FUNÇÃO: Registra a hora que voltou
 function registrarVoltaNP() {
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     justManut.value += `-> RETORNO AO TRABALHO ÀS ${agora}. `;
@@ -203,13 +195,16 @@ function calcular() {
     totMaqVisual.innerText = horasMaq.toFixed(2);
     totalHorasDia.innerText = `${horasMaq.toFixed(2)} Horas`;
 
-    let alvo = parseFloat(tipoManut.value);
+    // RECUPERANDO O ALERTA DE MANUTENÇÃO VENCIDA
+    let alvo = parseFloat(tipoManut.value); 
     let painel = document.getElementById('painelHorimetro');
     let statusTxt = document.getElementById('statusManut');
+    
     painel.classList.remove('proximo', 'vencido');
     statusTxt.innerText = "SISTEMA OK";
 
-    if(alvo > 0 && hF > 0) {
+    // Se o valor for um número (Ex: 100, 250, 500), executa o alerta
+    if(!isNaN(alvo) && alvo > 0 && hF > 0) {
         let falta = alvo - hF;
         if(falta <= 0) { 
             painel.classList.add('vencido'); 
@@ -239,7 +234,6 @@ function gerarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const isVencido = document.getElementById('painelHorimetro').classList.contains('vencido');
-    
     doc.setFillColor(26, 67, 115);
     doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
@@ -247,7 +241,6 @@ function gerarPDF() {
     doc.text("AGRO NA PALMA DA MÃO", 105, 18, {align:"center"});
     doc.setFontSize(10);
     doc.text("Desenvolvido por João Divino Barbosa ®", 105, 28, {align:"center"});
-    
     if(isVencido) {
         doc.setFillColor(231, 76, 60);
         doc.rect(0, 40, 210, 15, 'F');
@@ -256,42 +249,33 @@ function gerarPDF() {
         doc.setFont(undefined, 'bold');
         doc.text("ALERTA: MANUTENÇÃO VENCIDA", 105, 50, {align:"center"});
     }
-
     doc.setTextColor(0,0,0);
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.text(`RESUMO: ${totalHorasDia.innerText} TRABALHADAS`, 20, 65);
-    
     doc.setFont(undefined, 'normal');
     doc.text(`FAZENDA: ${fazenda.value.toUpperCase()}`, 20, 75);
     doc.text(`MÁQUINA: ${tipoMaq.value.toUpperCase()} (${numMaq.value})`, 20, 85);
     doc.text(`OPERAÇÃO: ${tipoManut.options[tipoManut.selectedIndex].text}`, 20, 95);
     doc.text(`HORÍMETRO: ${vI.value} -> ${vF.value}`, 20, 105);
     doc.text(`OPERADOR: ${op.value.toUpperCase()}`, 20, 115);
-    
     doc.setFont(undefined, 'bold');
     doc.text("OBSERVAÇÕES E STATUS DO EQUIPAMENTO:", 20, 130);
     doc.rect(15, 132, 180, 40);
-    
     let obsFinal = justManut.value.trim();
     if(isVencido) {
         doc.setTextColor(200, 0, 0);
         obsFinal = `[ATENÇÃO] ${tipoManut.options[tipoManut.selectedIndex].text} VENCIDA!\n` + (obsFinal || "Operador não inseriu justificativa para o atraso.");
-    } else {
-        obsFinal = obsFinal || "Nenhuma observação inserida.";
-    }
-    
+    } else { obsFinal = obsFinal || "Nenhuma observação inserida."; }
     doc.setFontSize(10);
     doc.text(doc.splitTextToSize(obsFinal, 170), 20, 140);
-    
     doc.save(`Relatorio_Agro_${fazenda.value}.pdf`);
 }
 
 function enviarWA() {
-    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value} (${numMaq.value})\n⚙️ *HORAS TRABALHADAS:* ${totalHorasDia.innerText}\n🛠️ *STATUS:* ${statusManut.innerText}\n📍 *FAZENDA:* ${fazenda.value}\n📋 *OPERAÇÃO:* ${tipoManut.options[tipoManut.selectedIndex].text}`;
+    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value} (${numMaq.value})\n⚙️ *HORAS TRABALHADAS:* ${totalHorasDia.innerText}\n🛠️ *STATUS:* ${statusManut.innerText}\n📍 *FAZENDA:* ${fazenda.value}\n📋 *OPERAÇÃO:* ${tipoManut.options[tipoManut.selectedIndex].text}\n📝 *OBS:* ${justManut.value}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
 }
-
 function limparTudo() { if(confirm("Deseja resetar todos os dados?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>

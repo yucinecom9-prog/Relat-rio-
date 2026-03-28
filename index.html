@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1a4373">
     <title>Agro na Palma da Mão - João Divino Barbosa ®</title>
-<link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root { --primary:#1a4373; --bg:#f0f2f5; --warning:#f39c12; --danger:#e74c3c; --success:#25d366; --dark-card: #2c3e50; --text-muted: #5a6e7c; }
@@ -122,6 +122,15 @@
 <footer>Desenvolvido por João Divino Barbosa ®</footer>
 
 <script>
+// ATIVAÇÃO DO SERVICE WORKER (PARA FUNCIONAR OFFLINE)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('SW ativo!', reg))
+            .catch(err => console.log('Erro no SW:', err));
+    });
+}
+
 let dadosLogica = { ini: null, fim: null, emEmergencia: false };
 
 function salvar() {
@@ -164,7 +173,6 @@ function acaoEmergencia(tipo) {
     salvar();
 }
 
-// SUA FUNÇÃO MARCAR ORIGINAL
 function marcar(t) {
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     if(t === 'ini') {
@@ -202,21 +210,18 @@ function gerarPDF() {
     const doc = new jsPDF();
     const isVencido = painelHorimetro.classList.contains('vencido');
     
-    // CABEÇALHO LIMPO
     doc.setFillColor(26, 67, 115); doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont(undefined, 'bold');
     doc.text("AGRO NA PALMA DA MÃO", 105, 18, {align:"center"});
     doc.setFontSize(10); doc.setFont(undefined, 'normal');
     doc.text("Desenvolvido por João Divino Barbosa ®", 105, 28, {align:"center"});
 
-    // DADOS
     doc.setTextColor(0,0,0); doc.setFontSize(12);
     doc.text(`FAZENDA: ${fazenda.value.toUpperCase()}`, 20, 60);
     doc.text(`MÁQUINA: ${tipoMaq.value.toUpperCase()} (${numMaq.value})`, 20, 70);
     doc.text(`OPERADOR: ${op.value.toUpperCase()}`, 20, 80);
     doc.text(`MANUTENÇÃO: ${tipoManut.options[tipoManut.selectedIndex].text}`, 20, 90);
     
-    // TOTAL DE HORAS EM DESTAQUE (NOVO)
     doc.setFillColor(230, 240, 255); doc.rect(20, 100, 170, 15, 'F');
     doc.setFont(undefined, 'bold');
     doc.text(`TOTAL DE HORAS TRABALHADAS: ${totalHorasDia.innerText}`, 30, 110);
@@ -227,7 +232,6 @@ function gerarPDF() {
     doc.setFontSize(10);
     doc.text(doc.splitTextToSize(justManut.value || "Nenhuma.", 170), 20, 152);
 
-    // ALERTA NO FINAL DA PÁGINA
     if(isVencido) {
         doc.setFillColor(231, 76, 60); doc.rect(0, 280, 210, 17, 'F');
         doc.setTextColor(255, 255, 255); doc.setFontSize(12); doc.setFont(undefined, 'bold');

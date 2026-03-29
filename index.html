@@ -2,229 +2,94 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1a4373">
-    <title>Relatório Diário Máquinas - João Divino Barbosa ®</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroSystem Pro - Relatório Diário</title>
     <style>
-        :root { --primary:#1a4373; --bg:#f0f2f5; --warning:#f39c12; --danger:#e74c3c; --success:#25d366; --dark-card: #2c3e50; --text-muted: #5a6e7c; }
-        * { box-sizing: border-box; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background:var(--bg); padding:12px; margin:0; padding-bottom: 40px; }
-        .card { background:white; padding:18px; border-radius:18px; box-shadow:0 6px 15px rgba(0,0,0,0.1); margin-bottom:16px; border-left:6px solid var(--primary); }
-        h2 { font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-bottom:12px; font-weight:800; }
-        input, textarea, select { width:100%; padding:14px; margin-bottom:10px; border:2px solid #e2e8f0; border-radius:12px; font-size:16px; font-weight:600; outline: none; background: white; }
-        .row { display:flex; gap:10px; }
-        button { width:100%; padding:16px; border:none; border-radius:40px; font-weight:bold; font-size:15px; color:white; margin-bottom:8px; cursor:pointer; }
+        body { font-family: Arial, sans-serif; padding: 15px; background-color: #f4f4f4; }
+        .container { background: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2e7d32; }
         
-        .card-medicao { background: var(--dark-card); color: white; border-left-color: #1abc9c; }
-        .card-medicao.proximo { background: #d35400; border-left-color: #f1c40f; }
-        .card-medicao.vencido { background: #c0392b; border-left-color: #ecf0f1; }
+        .campo { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         
-        .card-medicao input { background: rgba(255,255,255,0.1); border: none; color: white; font-size: 24px; text-align: center; }
-        
-        .resumo-dia { background: #e0f2fe; border: 2px solid #0ea5e9; border-radius: 12px; padding: 15px; text-align: center; margin-top: 10px; }
-        .hidden { display: none !important; }
-        footer { text-align:center; font-size:10px; margin:20px; color:#94a3b8; font-weight: bold; }
-        
-        .btn-emergencia-agro { background: #d35400 !important; border: 2px solid #a04000 !important; }
-        .status-emergencia { background: #fff5f5; border: 1px solid #ff0000; padding: 10px; border-radius: 8px; font-size: 12px; color: #b91c1c; text-align: center; margin-bottom: 10px; font-weight: 800; }
+        .btn-container { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        button { padding: 15px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; color: #fff; }
+        .btn-enviar { background-color: #2e7d32; }
+        .btn-limpar { background-color: #d32f2f; }
+
+        /* Estilo do Relatório para o envio/impressão */
+        #printArea { display: none; }
+        .relatorio-formatado { font-family: Courier, monospace; padding: 10px; border: 1px solid #000; }
     </style>
 </head>
-<body onload="carregarDados()">
+<body>
 
-<div style="text-align: center; margin-bottom: 15px;">
-    <h1 style="color:var(--primary); font-size: 20px; margin:0;">Agro na Palma da Mão</h1>
-    <small style="color:var(--text-muted)">Desenvolvido por João Divino Barbosa ®</small>
-</div>
-
-<div class="card">
-    <h2>📋 1. IDENTIFICAÇÃO E REVISÃO</h2>
-    <input id="fazenda" placeholder="Fazenda *" oninput="salvar()">
-    <input id="op" placeholder="Operador *" oninput="salvar()">
+<div class="container">
+    <h2>AGRO SYSTEM PRO</h2>
     
-    <div class="row">
-        <select id="tipoMaq" onchange="salvar()" style="flex:1.5">
-            <option value="">Escolha a Máquina *</option>
-            <option value="Trator">Trator</option>
-            <option value="Colheitadeira">Colhedeira</option>
-            <option value="Escavadeira">Escavadeira</option>
-            <option value="Pá Carregadeira">Pá Carregadeira</option>
-            <option value="Pulverizador">Pulverizador</option>
-            <option value="Trator de Esteira">Trator de Esteira</option>
-            <option value="Caminhão">Caminhão</option>
-        </select>
-        <input id="numMaq" placeholder="Nº/Pref*" oninput="salvar()" style="flex:1">
+    <div class="campo">
+        <label>FAZENDA:</label>
+        <input type="text" id="fazenda" placeholder="Nome da Fazenda">
+    </div>
+    
+    <div class="campo">
+        <label>MÁQUINA:</label>
+        <input type="text" id="maquina" placeholder="Ex: Colheitadeira 09">
+    </div>
+    
+    <div class="campo">
+        <label>OPERADOR:</label>
+        <input type="text" id="operador" placeholder="Seu nome">
+    </div>
+    
+    <div class="campo">
+        <label>TOTAL DE HORAS:</label>
+        <input type="number" step="0.01" id="horas" placeholder="0.00">
     </div>
 
-    <select id="tipoManut" onchange="salvar(); calcular()">
-        <option value="0">Selecione a Manutenção/Revisão *</option>
-        <option value="100">Revisão 100 Horas</option>
-        <option value="250">Revisão 250 Horas</option>
-        <option value="500">Revisão 500 Horas</option>
-        <option value="1000">Revisão 1.000 Horas</option>
-        <option value="Corretiva">Manutenção Corretiva (Quebra)</option>
-    </select>
-</div>
-
-<div id="painelHorimetro" class="card card-medicao">
-    <h2>📊 2. HORÍMETRO & STATUS</h2>
-    <div class="row">
-        <div style="flex:1">
-            <span style="font-size:10px;">INICIAL</span>
-            <input type="number" id="vI" step="0.1" oninput="salvar(); calcular()">
-        </div>
-        <div style="flex:1">
-            <span style="font-size:10px;">FINAL</span>
-            <input type="number" id="vF" step="0.1" oninput="salvar(); calcular()">
-        </div>
-    </div>
-    <div style="text-align: center; margin-top: 10px;">
-        <span id="totMaqVisual" style="font-size: 32px; font-weight: 900;">0.00</span>
-        <span id="statusManut" style="font-size:11px; font-weight:900; display:block; margin-top:5px;">SISTEMA OK</span>
+    <div class="btn-container">
+        <button class="btn-enviar" onclick="processarRelatorio()">GERAR E ENVIAR RELATÓRIO</button>
+        <button class="btn-limpar" onclick="limpar()">LIMPAR TUDO</button>
     </div>
 </div>
-
-<div id="resumoDia" class="card resumo-dia hidden">
-    <h2 style="color: #0369a1;">📅 TOTAL DE HORAS DO DIA</h2>
-    <span id="totalHorasDia" style="font-size: 28px; font-weight: 900; color: #1e3a8a;">0.00 Horas</span>
-</div>
-
-<div class="card">
-    <h2>🛠️ 3. OBSERVAÇÕES E EMERGÊNCIA</h2>
-    <div id="statusEmergencia" class="status-emergencia hidden">🚨 MÁQUINA EM PARADA DE EMERGÊNCIA</div>
-    <textarea id="justManut" placeholder="DESCREVA O QUE FOI FEITO..." oninput="salvar(); calcular()" style="height:80px;"></textarea>
-    <button id="btnParar" class="btn-emergencia-agro" onclick="acaoEmergencia('parar')">🚨 PARADA DE EMERGÊNCIA (M.N.P)</button>
-    <button id="btnRetomar" style="background:var(--success); display:none;" onclick="acaoEmergencia('retomar')">✅ RETOMAR TRABALHO</button>
-</div>
-
-<div class="card">
-    <h2>⏱️ 4. JORNADA DE TRABALHO</h2>
-    <div class="row" style="text-align:center">
-        <div style="flex:1"><label style="font-size:9px;">INÍCIO</label><input id="sIni" readonly style="border:none; text-align:center; background:none;"></div>
-        <div style="flex:1"><label style="font-size:9px;">FIM</label><input id="sFim" readonly style="border:none; text-align:center; background:none;"></div>
-    </div>
-    <button style="background:var(--primary)" onclick="marcar('ini')">▶ Iniciar Trabalho</button>
-    <button style="background:#475569" onclick="marcar('fim')">⏹️ Finalizar Trabalho</button>
-</div>
-
-<div class="card">
-    <button style="background:var(--danger)" onclick="gerarPDF()">📄 GERAR PDF PROFISSIONAL</button>
-    <button style="background:var(--success)" onclick="enviarWA()">📱 WHATSAPP</button>
-    <button onclick="limparTudo()" style="background:#95a5a6; font-size:10px; padding:5px;">🔄 RESETAR</button>
-</div>
-
-<footer>Desenvolvido por João Divino Barbosa ®</footer>
 
 <script>
-// A TRAVA QUE VOCÊ PEDIU
-function validarTrava() {
-    let f = document.getElementById('fazenda').value.trim();
-    let o = document.getElementById('op').value.trim();
-    let t = document.getElementById('tipoMaq').value;
-    let n = document.getElementById('numMaq').value.trim();
+    function processarRelatorio() {
+        // Captura dos dados
+        const fazenda = document.getElementById('fazenda').value.trim();
+        const maquina = document.getElementById('maquina').value.trim();
+        const operador = document.getElementById('operador').value.trim();
+        const horas = document.getElementById('horas').value.trim();
 
-    if(!f || !o || !t || !n) {
-        alert("🚨 CABEÇALHO INCOMPLETO!\nPreencha Fazenda, Operador, Máquina e Nº antes de continuar.");
-        return false;
+        // TRAVA DE SEGURANÇA: Não deixa passar se o cabeçalho estiver vazio
+        if (fazenda === "" || maquina === "" || operador === "" || horas === "") {
+            alert("ERRO: Preencha todos os dados! Não é possível gerar o relatório sem o nome da Fazenda, Máquina ou Operador.");
+            return;
+        }
+
+        // Formatação do Texto para o WhatsApp (Mantendo seu estilo)
+        const mensagem = 
+            `*RELATÓRIO DIÁRIO AGRO*\n` +
+            `*FAZENDA:* ${fazenda.toUpperCase()}\n` +
+            `*MAQUINA:* ${maquina.toUpperCase()}\n` +
+            `*OPERADOR:* ${operador.toUpperCase()}\n` +
+            `*TOTAL DE HORAS:* ${parseFloat(horas).toFixed(2)} Horas`;
+
+        // Comando para abrir o WhatsApp
+        const url = "https://wa.me/?text=" + encodeURIComponent(mensagem);
+        window.open(url, "_blank");
     }
-    return true;
-}
 
-let dadosLogica = { ini: null, fim: null, emEmergencia: false };
-
-function salvar() {
-    let obj = {
-        fazenda: fazenda.value, op: op.value, tipoMaq: tipoMaq.value, numMaq: numMaq.value, tipoManut: tipoManut.value,
-        vI: vI.value, vF: vF.value, sIni: sIni.value, sFim: sFim.value, justManut: justManut.value, logica: dadosLogica
-    };
-    localStorage.setItem('agro_completo_v1', JSON.stringify(obj));
-}
-
-function carregarDados() {
-    let s = JSON.parse(localStorage.getItem('agro_completo_v1') || '{}');
-    fazenda.value = s.fazenda || ''; op.value = s.op || '';
-    tipoMaq.value = s.tipoMaq || ''; numMaq.value = s.numMaq || '';
-    tipoManut.value = s.tipoManut || '0';
-    vI.value = s.vI || ''; vF.value = s.vF || ''; sIni.value = s.sIni || ''; sFim.value = s.sFim || '';
-    justManut.value = s.justManut || '';
-    dadosLogica = s.logica || { ini: null, fim: null, emEmergencia: false };
-    if(dadosLogica.emEmergencia) {
-        btnParar.style.display = 'none'; btnRetomar.style.display = 'block';
-        statusEmergencia.classList.remove('hidden');
+    function limpar() {
+        if(confirm("Deseja limpar os campos?")) {
+            document.getElementById('fazenda').value = "";
+            document.getElementById('maquina').value = "";
+            document.getElementById('operador').value = "";
+            document.getElementById('horas').value = "";
+        }
     }
-    calcular();
-}
-
-function acaoEmergencia(tipo) {
-    if(!validarTrava()) return;
-    let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    if(tipo === 'parar') {
-        justManut.value += `\n[PARADA DE EMERGÊNCIA ÀS ${agora}] `;
-        dadosLogica.emEmergencia = true;
-        btnParar.style.display = 'none'; btnRetomar.style.display = 'block';
-        statusEmergencia.classList.remove('hidden');
-    } else {
-        justManut.value += `-> RETORNO ÀS ${agora}. `;
-        dadosLogica.emEmergencia = false;
-        btnRetomar.style.display = 'none'; btnParar.style.display = 'block';
-        statusEmergencia.classList.add('hidden');
-    }
-    salvar();
-}
-
-function marcar(t) {
-    if(!validarTrava()) return;
-    let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    if(t === 'ini') {
-        dadosLogica.ini = new Date().getTime();
-        sIni.value = agora;
-    } else {
-        if(!sIni.value) { alert("Marque o INÍCIO primeiro!"); return; }
-        dadosLogica.fim = new Date().getTime();
-        sFim.value = agora;
-    }
-    salvar();
-}
-
-function calcular() {
-    let hI = parseFloat(vI.value) || 0;
-    let hF = parseFloat(vF.value) || 0;
-    let total = Math.max(0, hF - hI);
-    totMaqVisual.innerText = total.toFixed(2);
-    totalHorasDia.innerText = total.toFixed(2) + " Horas";
-
-    if(hF > 0) resumoDia.classList.remove('hidden'); else resumoDia.classList.add('hidden');
-
-    let alvo = parseFloat(tipoManut.value);
-    painelHorimetro.classList.remove('proximo', 'vencido');
-    statusManut.innerText = "SISTEMA OK";
-
-    if(!isNaN(alvo) && alvo > 0 && hF > 0) {
-        let falta = alvo - hF;
-        if(falta <= 0) { painelHorimetro.classList.add('vencido'); statusManut.innerText = `🚨 REVISÃO VENCIDA HÁ ${Math.abs(falta).toFixed(1)}H`; }
-        else if(falta <= 10) { painelHorimetro.classList.add('proximo'); statusManut.innerText = `⚠️ ATENÇÃO: REVISÃO EM ${falta.toFixed(1)}H`; }
-    }
-}
-
-function gerarPDF() {
-    if(!validarTrava()) return;
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.text("RELATORIO DIARIO AGRO", 10, 10);
-    doc.text(`FAZENDA: ${fazenda.value}`, 10, 20);
-    doc.text(`MAQUINA: ${tipoMaq.value} (${numMaq.value})`, 10, 30);
-    doc.text(`OPERADOR: ${op.value}`, 10, 40);
-    doc.text(`TOTAL DE HORAS: ${totalHorasDia.innerText}`, 10, 50);
-    doc.save(`Relatorio_${fazenda.value}.pdf`);
-}
-
-function enviarWA() {
-    if(!validarTrava()) return;
-    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value}\n⚙️ *TOTAL DO DIA:* ${totalHorasDia.innerText}\n📝 *OBS:* ${justManut.value}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-}
-
-function limparTudo() { if(confirm("Resetar relatório?")) { localStorage.clear(); location.reload(); } }
 </script>
+
 </body>
 </html>

@@ -132,9 +132,16 @@ if ('serviceWorker' in navigator) {
 
 let dadosLogica = { ini: null, fim: null, emEmergencia: false };
 
+// TRAVA DE SEGURANÇA: Só permite as funções se os campos básicos estiverem preenchidos
 function validarIdentificacao() {
-    if(!fazenda.value || !op.value || !tipoMaq.value || !numMaq.value || tipoManut.value === "0") {
-        alert("⚠️ ATENÇÃO: Preencha toda a IDENTIFICAÇÃO (Fazenda, Operador, Máquina e Manutenção) antes de prosseguir!");
+    const f = document.getElementById('fazenda').value.trim();
+    const o = document.getElementById('op').value.trim();
+    const t = document.getElementById('tipoMaq').value;
+    const n = document.getElementById('numMaq').value.trim();
+    const m = document.getElementById('tipoManut').value;
+
+    if(!f || !o || !t || !n || m === "0") {
+        alert("🚨 ERRO: Preencha todos os campos da IDENTIFICAÇÃO (Fazenda, Operador, Máquina e Manutenção) antes de qualquer ação!");
         return false;
     }
     return true;
@@ -142,8 +149,13 @@ function validarIdentificacao() {
 
 function validarRelatorioCompleto() {
     if(!validarIdentificacao()) return false;
-    if(!vI.value || !vF.value || !sIni.value || !sFim.value) {
-        alert("⚠️ RELATÓRIO INCOMPLETO: Preencha os Horímetros e marque o Início/Fim do trabalho!");
+    const vi = document.getElementById('vI').value;
+    const vf = document.getElementById('vF').value;
+    const si = document.getElementById('sIni').value;
+    const sf = document.getElementById('sFim').value;
+
+    if(!vi || !vf || !si || !sf) {
+        alert("⚠️ RELATÓRIO INCOMPLETO: Você precisa preencher os Horímetros e marcar o Início/Fim do trabalho!");
         return false;
     }
     return true;
@@ -174,7 +186,7 @@ function carregarDados() {
 }
 
 function acaoEmergencia(tipo) {
-    if(!validarIdentificacao()) return;
+    if(!validarIdentificacao()) return; // TRAVA AQUI
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     if(tipo === 'parar') {
         justManut.value += `\n[PARADA DE EMERGÊNCIA ÀS ${agora}] `;
@@ -191,7 +203,7 @@ function acaoEmergencia(tipo) {
 }
 
 function marcar(t) {
-    if(!validarIdentificacao()) return;
+    if(!validarIdentificacao()) return; // TRAVA AQUI
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     if(t === 'ini') {
         dadosLogica.ini = new Date().getTime();
@@ -225,7 +237,7 @@ function calcular() {
 }
 
 function gerarPDF() {
-    if(!validarRelatorioCompleto()) return;
+    if(!validarRelatorioCompleto()) return; // TRAVA AQUI
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const isVencido = painelHorimetro.classList.contains('vencido');
@@ -261,8 +273,13 @@ function gerarPDF() {
 }
 
 function enviarWA() {
-    if(!validarRelatorioCompleto()) return;
+    if(!validarRelatorioCompleto()) return; // TRAVA AQUI
     let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value}\n⚙️ *TOTAL DO DIA:* ${totalHorasDia.innerText}\n📝 *OBS:* ${justManut.value}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
 }
-function limparTudo() { if(confirm("Reset
+
+// BOTÃO RESET CONSERVADO
+function limparTudo() { if(confirm("Resetar? Isso apagará todos os dados atuais.")) { localStorage.clear(); location.reload(); } }
+</script>
+</body>
+</html>

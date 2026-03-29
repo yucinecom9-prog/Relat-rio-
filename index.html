@@ -122,7 +122,6 @@
 <footer>Desenvolvido por João Divino Barbosa ®</footer>
 
 <script>
-// ATIVAÇÃO DO SERVICE WORKER (PARA FUNCIONAR OFFLINE)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
@@ -132,6 +131,23 @@ if ('serviceWorker' in navigator) {
 }
 
 let dadosLogica = { ini: null, fim: null, emEmergencia: false };
+
+function validarIdentificacao() {
+    if(!fazenda.value || !op.value || !tipoMaq.value || !numMaq.value || tipoManut.value === "0") {
+        alert("⚠️ ATENÇÃO: Preencha toda a IDENTIFICAÇÃO (Fazenda, Operador, Máquina e Manutenção) antes de prosseguir!");
+        return false;
+    }
+    return true;
+}
+
+function validarRelatorioCompleto() {
+    if(!validarIdentificacao()) return false;
+    if(!vI.value || !vF.value || !sIni.value || !sFim.value) {
+        alert("⚠️ RELATÓRIO INCOMPLETO: Preencha os Horímetros e marque o Início/Fim do trabalho!");
+        return false;
+    }
+    return true;
+}
 
 function salvar() {
     let obj = {
@@ -158,6 +174,7 @@ function carregarDados() {
 }
 
 function acaoEmergencia(tipo) {
+    if(!validarIdentificacao()) return;
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     if(tipo === 'parar') {
         justManut.value += `\n[PARADA DE EMERGÊNCIA ÀS ${agora}] `;
@@ -174,11 +191,13 @@ function acaoEmergencia(tipo) {
 }
 
 function marcar(t) {
+    if(!validarIdentificacao()) return;
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     if(t === 'ini') {
         dadosLogica.ini = new Date().getTime();
         sIni.value = agora;
     } else {
+        if(!sIni.value) { alert("Marque o INÍCIO primeiro!"); return; }
         dadosLogica.fim = new Date().getTime();
         sFim.value = agora;
     }
@@ -206,6 +225,7 @@ function calcular() {
 }
 
 function gerarPDF() {
+    if(!validarRelatorioCompleto()) return;
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const isVencido = painelHorimetro.classList.contains('vencido');
@@ -241,10 +261,8 @@ function gerarPDF() {
 }
 
 function enviarWA() {
+    if(!validarRelatorioCompleto()) return;
     let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value}\n⚙️ *TOTAL DO DIA:* ${totalHorasDia.innerText}\n📝 *OBS:* ${justManut.value}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
 }
-function limparTudo() { if(confirm("Resetar?")) { localStorage.clear(); location.reload(); } }
-</script>
-</body>
-</html>
+function limparTudo() { if(confirm("Reset

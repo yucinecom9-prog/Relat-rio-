@@ -15,66 +15,90 @@
         input, textarea, select { width:100%; padding:14px; margin-bottom:10px; border:2px solid #e2e8f0; border-radius:12px; font-size:16px; font-weight:600; outline: none; background: white; }
         .row { display:flex; gap:10px; }
         button { width:100%; padding:16px; border:none; border-radius:40px; font-weight:bold; font-size:15px; color:white; margin-bottom:8px; cursor:pointer; }
+        
         .card-medicao { background: var(--dark-card); color: white; border-left-color: #1abc9c; }
+        .card-medicao.proximo { background: #d35400; border-left-color: #f1c40f; }
+        .card-medicao.vencido { background: #c0392b; border-left-color: #ecf0f1; }
+        
         .card-medicao input { background: rgba(255,255,255,0.1); border: none; color: white; font-size: 24px; text-align: center; }
+        
         .resumo-dia { background: #e0f2fe; border: 2px solid #0ea5e9; border-radius: 12px; padding: 15px; text-align: center; margin-top: 10px; }
         .hidden { display: none !important; }
         footer { text-align:center; font-size:10px; margin:20px; color:#94a3b8; font-weight: bold; }
+        
+        .btn-emergencia-agro { background: #d35400 !important; border: 2px solid #a04000 !important; }
+        .status-emergencia { background: #fff5f5; border: 1px solid #ff0000; padding: 10px; border-radius: 8px; font-size: 12px; color: #b91c1c; text-align: center; margin-bottom: 10px; font-weight: 800; }
     </style>
 </head>
 <body onload="carregarDados()">
 
 <div style="text-align: center; margin-bottom: 15px;">
     <h1 style="color:var(--primary); font-size: 20px; margin:0;">Agro na Palma da Mão</h1>
-    <small style="color:var(--text-muted)">João Divino Barbosa ®</small>
+    <small style="color:var(--text-muted)">Desenvolvido por João Divino Barbosa ®</small>
 </div>
 
 <div class="card">
-    <h2>📋 1. IDENTIFICAÇÃO (OBRIGATÓRIO)</h2>
-    <input id="fazenda" placeholder="Fazenda *">
-    <input id="op" placeholder="Operador *">
+    <h2>📋 1. IDENTIFICAÇÃO E REVISÃO</h2>
+    <input id="fazenda" placeholder="Fazenda *" oninput="salvar()">
+    <input id="op" placeholder="Operador *" oninput="salvar()">
     
     <div class="row">
-        <select id="tipoMaq" style="flex:1.5">
-            <option value="">Máquina *</option>
+        <select id="tipoMaq" onchange="salvar()" style="flex:1.5">
+            <option value="">Escolha a Máquina *</option>
             <option value="Trator">Trator</option>
             <option value="Colheitadeira">Colhedeira</option>
-            <option value="Pulverizador">Pulverizador</option>
             <option value="Escavadeira">Escavadeira</option>
+            <option value="Pá Carregadeira">Pá Carregadeira</option>
+            <option value="Pulverizador">Pulverizador</option>
+            <option value="Trator de Esteira">Trator de Esteira</option>
+            <option value="Caminhão">Caminhão</option>
         </select>
-        <input id="numMaq" placeholder="Nº *" style="flex:1">
+        <input id="numMaq" placeholder="Nº/Pref*" oninput="salvar()" style="flex:1">
     </div>
+
+    <select id="tipoManut" onchange="salvar(); calcular()">
+        <option value="0">Selecione a Manutenção/Revisão *</option>
+        <option value="100">Revisão 100 Horas</option>
+        <option value="250">Revisão 250 Horas</option>
+        <option value="500">Revisão 500 Horas</option>
+        <option value="1000">Revisão 1.000 Horas</option>
+        <option value="Corretiva">Manutenção Corretiva (Quebra)</option>
+    </select>
 </div>
 
 <div id="painelHorimetro" class="card card-medicao">
-    <h2>📊 2. HORÍMETRO</h2>
+    <h2>📊 2. HORÍMETRO & STATUS</h2>
     <div class="row">
         <div style="flex:1">
             <span style="font-size:10px;">INICIAL</span>
-            <input type="number" id="vI" step="0.1" oninput="calcular()">
+            <input type="number" id="vI" step="0.1" oninput="salvar(); calcular()">
         </div>
         <div style="flex:1">
             <span style="font-size:10px;">FINAL</span>
-            <input type="number" id="vF" step="0.1" oninput="calcular()">
+            <input type="number" id="vF" step="0.1" oninput="salvar(); calcular()">
         </div>
     </div>
     <div style="text-align: center; margin-top: 10px;">
         <span id="totMaqVisual" style="font-size: 32px; font-weight: 900;">0.00</span>
+        <span id="statusManut" style="font-size:11px; font-weight:900; display:block; margin-top:5px;">SISTEMA OK</span>
     </div>
 </div>
 
 <div id="resumoDia" class="card resumo-dia hidden">
-    <h2 style="color: #0369a1;">📅 TOTAL DE HORAS</h2>
-    <span id="totalHorasDia" style="font-size: 28px; font-weight: 900;">0.00 Horas</span>
+    <h2 style="color: #0369a1;">📅 TOTAL DE HORAS DO DIA</h2>
+    <span id="totalHorasDia" style="font-size: 28px; font-weight: 900; color: #1e3a8a;">0.00 Horas</span>
 </div>
 
 <div class="card">
-    <h2>🛠️ 3. OBSERVAÇÕES</h2>
-    <textarea id="justManut" placeholder="Descreva o serviço..." style="height:80px;"></textarea>
+    <h2>🛠️ 3. OBSERVAÇÕES E EMERGÊNCIA</h2>
+    <div id="statusEmergencia" class="status-emergencia hidden">🚨 MÁQUINA EM PARADA DE EMERGÊNCIA</div>
+    <textarea id="justManut" placeholder="DESCREVA O QUE FOI FEITO..." oninput="salvar(); calcular()" style="height:80px;"></textarea>
+    <button id="btnParar" class="btn-emergencia-agro" onclick="acaoEmergencia('parar')">🚨 PARADA DE EMERGÊNCIA (M.N.P)</button>
+    <button id="btnRetomar" style="background:var(--success); display:none;" onclick="acaoEmergencia('retomar')">✅ RETOMAR TRABALHO</button>
 </div>
 
 <div class="card">
-    <h2>⏱️ 4. JORNADA</h2>
+    <h2>⏱️ 4. JORNADA DE TRABALHO</h2>
     <div class="row" style="text-align:center">
         <div style="flex:1"><label style="font-size:9px;">INÍCIO</label><input id="sIni" readonly style="border:none; text-align:center; background:none;"></div>
         <div style="flex:1"><label style="font-size:9px;">FIM</label><input id="sFim" readonly style="border:none; text-align:center; background:none;"></div>
@@ -86,106 +110,121 @@
 <div class="card">
     <button style="background:var(--danger)" onclick="gerarPDF()">📄 GERAR PDF PROFISSIONAL</button>
     <button style="background:var(--success)" onclick="enviarWA()">📱 WHATSAPP</button>
-    <button onclick="limparTudo()" style="background:#95a5a6; font-size:10px; padding:5px;">🔄 RESETAR DADOS</button>
+    <button onclick="limparTudo()" style="background:#95a5a6; font-size:10px; padding:5px;">🔄 RESETAR</button>
 </div>
 
 <footer>Desenvolvido por João Divino Barbosa ®</footer>
 
 <script>
-// FUNÇÃO DA TRAVA
-function validar() {
+// A TRAVA QUE VOCÊ PEDIU
+function validarTrava() {
     let f = document.getElementById('fazenda').value.trim();
     let o = document.getElementById('op').value.trim();
     let t = document.getElementById('tipoMaq').value;
     let n = document.getElementById('numMaq').value.trim();
 
-    if (!f || !o || !t || !n) {
-        alert("🚨 ATENÇÃO: Preencha a Fazenda, Operador e os dados da Máquina primeiro!");
+    if(!f || !o || !t || !n) {
+        alert("🚨 CABEÇALHO INCOMPLETO!\nPreencha Fazenda, Operador, Máquina e Nº antes de continuar.");
         return false;
     }
     return true;
 }
 
+let dadosLogica = { ini: null, fim: null, emEmergencia: false };
+
 function salvar() {
     let obj = {
-        fazenda: document.getElementById('fazenda').value,
-        op: document.getElementById('op').value,
-        tipoMaq: document.getElementById('tipoMaq').value,
-        numMaq: document.getElementById('numMaq').value,
-        vI: document.getElementById('vI').value,
-        vF: document.getElementById('vF').value,
-        sIni: document.getElementById('sIni').value,
-        sFim: document.getElementById('sFim').value,
-        justManut: document.getElementById('justManut').value
+        fazenda: fazenda.value, op: op.value, tipoMaq: tipoMaq.value, numMaq: numMaq.value, tipoManut: tipoManut.value,
+        vI: vI.value, vF: vF.value, sIni: sIni.value, sFim: sFim.value, justManut: justManut.value, logica: dadosLogica
     };
-    localStorage.setItem('agro_v20', JSON.stringify(obj));
+    localStorage.setItem('agro_completo_v1', JSON.stringify(obj));
 }
 
-// Salva automaticamente ao digitar
-document.querySelectorAll('input, select, textarea').forEach(el => {
-    el.addEventListener('input', salvar);
-});
-
 function carregarDados() {
-    let s = JSON.parse(localStorage.getItem('agro_v20') || '{}');
-    document.getElementById('fazenda').value = s.fazenda || '';
-    document.getElementById('op').value = s.op || '';
-    document.getElementById('tipoMaq').value = s.tipoMaq || '';
-    document.getElementById('numMaq').value = s.numMaq || '';
-    document.getElementById('vI').value = s.vI || '';
-    document.getElementById('vF').value = s.vF || '';
-    document.getElementById('sIni').value = s.sIni || '';
-    document.getElementById('sFim').value = s.sFim || '';
-    document.getElementById('justManut').value = s.justManut || '';
+    let s = JSON.parse(localStorage.getItem('agro_completo_v1') || '{}');
+    fazenda.value = s.fazenda || ''; op.value = s.op || '';
+    tipoMaq.value = s.tipoMaq || ''; numMaq.value = s.numMaq || '';
+    tipoManut.value = s.tipoManut || '0';
+    vI.value = s.vI || ''; vF.value = s.vF || ''; sIni.value = s.sIni || ''; sFim.value = s.sFim || '';
+    justManut.value = s.justManut || '';
+    dadosLogica = s.logica || { ini: null, fim: null, emEmergencia: false };
+    if(dadosLogica.emEmergencia) {
+        btnParar.style.display = 'none'; btnRetomar.style.display = 'block';
+        statusEmergencia.classList.remove('hidden');
+    }
     calcular();
 }
 
-function marcar(t) {
-    if (!validar()) return; // TRAVA AQUI
+function acaoEmergencia(tipo) {
+    if(!validarTrava()) return;
     let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    if(t === 'ini') document.getElementById('sIni').value = agora;
-    else document.getElementById('sFim').value = agora;
+    if(tipo === 'parar') {
+        justManut.value += `\n[PARADA DE EMERGÊNCIA ÀS ${agora}] `;
+        dadosLogica.emEmergencia = true;
+        btnParar.style.display = 'none'; btnRetomar.style.display = 'block';
+        statusEmergencia.classList.remove('hidden');
+    } else {
+        justManut.value += `-> RETORNO ÀS ${agora}. `;
+        dadosLogica.emEmergencia = false;
+        btnRetomar.style.display = 'none'; btnParar.style.display = 'block';
+        statusEmergencia.classList.add('hidden');
+    }
+    salvar();
+}
+
+function marcar(t) {
+    if(!validarTrava()) return;
+    let agora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    if(t === 'ini') {
+        dadosLogica.ini = new Date().getTime();
+        sIni.value = agora;
+    } else {
+        if(!sIni.value) { alert("Marque o INÍCIO primeiro!"); return; }
+        dadosLogica.fim = new Date().getTime();
+        sFim.value = agora;
+    }
     salvar();
 }
 
 function calcular() {
-    let hI = parseFloat(document.getElementById('vI').value) || 0;
-    let hF = parseFloat(document.getElementById('vF').value) || 0;
+    let hI = parseFloat(vI.value) || 0;
+    let hF = parseFloat(vF.value) || 0;
     let total = Math.max(0, hF - hI);
-    document.getElementById('totMaqVisual').innerText = total.toFixed(2);
-    document.getElementById('totalHorasDia').innerText = total.toFixed(2) + " Horas";
-    if(hF > 0) document.getElementById('resumoDia').classList.remove('hidden');
-    else document.getElementById('resumoDia').classList.add('hidden');
-    salvar();
+    totMaqVisual.innerText = total.toFixed(2);
+    totalHorasDia.innerText = total.toFixed(2) + " Horas";
+
+    if(hF > 0) resumoDia.classList.remove('hidden'); else resumoDia.classList.add('hidden');
+
+    let alvo = parseFloat(tipoManut.value);
+    painelHorimetro.classList.remove('proximo', 'vencido');
+    statusManut.innerText = "SISTEMA OK";
+
+    if(!isNaN(alvo) && alvo > 0 && hF > 0) {
+        let falta = alvo - hF;
+        if(falta <= 0) { painelHorimetro.classList.add('vencido'); statusManut.innerText = `🚨 REVISÃO VENCIDA HÁ ${Math.abs(falta).toFixed(1)}H`; }
+        else if(falta <= 10) { painelHorimetro.classList.add('proximo'); statusManut.innerText = `⚠️ ATENÇÃO: REVISÃO EM ${falta.toFixed(1)}H`; }
+    }
 }
 
 function gerarPDF() {
-    if (!validar()) return; // TRAVA AQUI
+    if(!validarTrava()) return;
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("RELATÓRIO DE MÁQUINA", 10, 20);
-    doc.setFontSize(12);
-    doc.text(`Fazenda: ${document.getElementById('fazenda').value}`, 10, 40);
-    doc.text(`Operador: ${document.getElementById('op').value}`, 10, 50);
-    doc.text(`Máquina: ${document.getElementById('tipoMaq').value} - ${document.getElementById('numMaq').value}`, 10, 60);
-    doc.text(`Horímetro: ${document.getElementById('vI').value} até ${document.getElementById('vF').value}`, 10, 70);
-    doc.text(`Total: ${document.getElementById('totalHorasDia').innerText}`, 10, 80);
-    doc.save(`Relatorio_${document.getElementById('fazenda').value}.pdf`);
+    doc.text("RELATORIO DIARIO AGRO", 10, 10);
+    doc.text(`FAZENDA: ${fazenda.value}`, 10, 20);
+    doc.text(`MAQUINA: ${tipoMaq.value} (${numMaq.value})`, 10, 30);
+    doc.text(`OPERADOR: ${op.value}`, 10, 40);
+    doc.text(`TOTAL DE HORAS: ${totalHorasDia.innerText}`, 10, 50);
+    doc.save(`Relatorio_${fazenda.value}.pdf`);
 }
 
 function enviarWA() {
-    if (!validar()) return; // TRAVA AQUI
-    let msg = `*AGRO - ${document.getElementById('fazenda').value}*\n🚜 ${document.getElementById('tipoMaq').value} (${document.getElementById('numMaq').value})\n⏱️ Total: ${document.getElementById('totalHorasDia').innerText}`;
+    if(!validarTrava()) return;
+    let msg = `*AGRO NA PALMA DA MÃO*\n🚜 *MÁQUINA:* ${tipoMaq.value}\n⚙️ *TOTAL DO DIA:* ${totalHorasDia.innerText}\n📝 *OBS:* ${justManut.value}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
 }
 
-function limparTudo() { 
-    if(confirm("Deseja resetar o relatório atual?")) { 
-        localStorage.clear(); 
-        location.reload(); 
-    } 
-}
+function limparTudo() { if(confirm("Resetar relatório?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
